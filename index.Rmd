@@ -1,0 +1,108 @@
+---
+title       : Coffee Shop Clusters in Soho, London
+subtitle    : Clustering coffee shops by popularity and proximity to Oxford Circus
+author      : Darren Wilkinson
+job         : 
+framework   : io2012     # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : bootstrap    # {mathjax, quiz, bootstrap}
+revealjs    : {theme: solarized}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+<style>
+.title-slide {
+  background-color: #ff6600; /* #EDE0CF; ; #CA9F9D*/
+}
+
+.title-slide hgroup > h1{
+ font-family: 'Calibri', 'Helvetica', sanserif; 
+}
+
+</style>
+
+## Introduction
+
+
+1. The objective is to group coffee shops in Soho, London so that users can make the most informed choices of where to go based on proximity and popularity metrics.
+
+2. The data can also be used to derive strategies for market positioning in a very competitive market.
+
+3. The clustering tool allows k-means clustering analysis to derive target sub-groups using pairwise mixes of parameters. 
+
+4. The parameters are derived from distance measures, ratings and the number of reviews.
+
+https://wilkinsondi.shinyapps.io/ShinyApp
+
+
+--- .class #id 
+
+## Data
+```{r, echo=FALSE, message=FALSE}
+#Generate dataset
+names <- c("FlatWhite","TapCoffee","FW","Yumchaa","Foxcroft","Princi","Sacred","SohoGrind",
+           "SohoJoe","Algeria","Tapped","Tonic")
+reviews <- c(131,28,30,117,77,215,59,16,38,41,8,5)
+ratings <- c(4,4,4.5,4,4,4,4,4,4,4.5,4,4)
+popularity <- sqrt(reviews)*ratings
+placelat <- c(51.513634,51.5154582,51.5129769,51.5152026,51.5129414,51.513846,51.5129446,51.5121446,51.5142755,51.5129833,51.5154582,51.5108185)
+placelon <- c(-0.1347613,-0.1358109,-.1364166,-.1361384,-.1341842,-.134522,-.138911,-.1383674,-.1326885,-.1322946,-.1358109,-.1357307)
+points <- cbind(placelon,placelat)
+rankpop <- as.numeric(rank(-popularity,na.last=TRUE))
+lonox <- c(-0.141921) #Calc of distances from Oxford Circus
+lonoxdist <- abs(placelon-lonox) #Calc of distances from Oxford Circus
+latox <- c(51.515006)
+latoxdist <- abs(placelat-latox)
+distfactor <- lonoxdist+latoxdist
+rankdist <- as.numeric(rank(distfactor,na.last=TRUE))
+df <- as.data.frame(c(1:12)) # Add into data frame
+names(df)[1] <-"site"
+df <- cbind(df, names,reviews,ratings,popularity,placelat,placelon,rankpop,distfactor,rankdist)
+df2 <- subset(df,select=c(popularity,distfactor,reviews,rankpop,rankdist))
+df3 <- subset(df,select=c(names,popularity,distfactor,reviews,rankpop,rankdist))
+datac <- subset(df,select=c(rankdist,rankpop))
+```
+
+- Data is from Google and Yelp for 12 coffee shops (16Nov15).
+- Popularity = rating score / sqrt(number of reviews)
+- Distance = coffee shop (lat,lon) minus Oxford Circus (lat,lon).
+```{r, echo=FALSE}
+df3
+```
+
+---.class #id
+
+## Locations
+```{r}
+plot(placelon, placelat) # Co-ordinates of coffee shops
+```
+
+---bg:#ff6600
+
+## Outcomes
+- A k-means clustering analysis is used to analyse target sub-groups.
+- The distance rank and popularity rank with k-means of 3 yields a clear clustering for coffee shop segmentation for the discerning coffee drinker or coffee shop strategist. 
+    - This is a crude prototype model that can be evolved in many ways.
+    - Include more coffee shops over a wider area
+    - More sophisticated distance parameters
+    - More features to differentiate offerings
+    - More sophisticated model
+    - Better integration of analytics and mapping tools
+
+
+```{r, echo=FALSE,message=FALSE, eval=FALSE}
+require(cluster)
+require(fpc)
+clusters <- kmeans(datac, 3)
+plot(rankdist,rankpop, col = clusters$cluster, pch = 20, cex = 3)
+points(clusters$centers, pch = 3, cex = 4, lwd = 3)
+
+```
+
+
+
+
+
+
+
